@@ -1,10 +1,32 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Simulador HFile de HBase</title>
+    <title>My App</title>
 </head>
 <body>
-    <h1>Simulador HFile de HBase</h1>
-    <p>Bienvenido al simulador HFile de HBase.</p>
+    <table>
+        <thead>
+            <tr>
+                <th>Row Key</th>
+                <th>Column Family</th>
+                <th>Timestamp</th>
+                <th>Value</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for row_key, row in rows %}
+            {% for column_family, values in row.items() %}
+            {% for timestamp, value in values.items() %}
+            <tr>
+                <td>{{ row_key }}</td>
+                <td>{{ column_family }}</td>
+                <td>{{ timestamp }}</td>
+                <td><a href="/edit/{{ row_key }}/{{ column_family }}/{{ timestamp }}">{{ value }}</a></td>
+            </tr>
+            {% endfor %}
+            {% endfor %}
+            {% endfor %}
+        </tbody>
+    </table>
 </body>
 </html>
