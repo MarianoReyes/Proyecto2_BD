@@ -1,0 +1,27 @@
+<!doctype html>
+<html>
+  <head>
+    <title>My Flask App</title>
+  </head>
+  <body>
+    <h1>Archivos hfile</h1>
+    {% if file_data %}
+      <ul>
+        {% for name, content in file_data.items() %}
+          <li>{{ name }} - {{ content }}</li>
+        {% endfor %}
+      </ul>
+    {% else %}
+      <p>No hay archivos hfile creados.</p>
+    {% endif %}
+    <hr>
+    <h2>Crear un nuevo archivo hfile</h2>
+    <form method="POST" action="/create">
+      <label for="name">Nombre:</label>
+      <input type="text" id="name" name="name" required><br><br>
+      <label for="content">Contenido:</label>
+      <textarea id="content" name="content" required></textarea><br><br>
+      <input type="submit" value="Crear archivo">
+    </form>
+  </body>
+</html>    

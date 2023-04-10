@@ -1,68 +1,59 @@
-from flask import Flask, request, jsonify
+from flask import Flask, render_template, request
 
 app = Flask(__name__)
 
-# Ejemplo de datos de la tabla
-table_data = {
-    'row1': {'column1': 'value1', 'column2': 'value2'},
-    'row2': {'column1': 'value3', 'column2': 'value4'}
-}
+# Define la estructura de datos para simular los archivos hfile
+file_data = {}
 
-# Ruta para obtener una celda específica
+# Define la ruta para la página principal
 
 
-@app.route('/get_cell')
-def get_cell():
-    row_key = request.args.get('row_key')
-    column_key = request.args.get('column_key')
-    if row_key in table_data and column_key in table_data[row_key]:
-        return jsonify({'value': table_data[row_key][column_key]})
+@app.route('/')
+def index():
+    return render_template('index.html', file_data=file_data)
+
+# Define la ruta para crear un nuevo archivo hfile
+
+
+@app.route('/create', methods=['POST'])
+def create():
+    name = request.form['name']
+    content = request.form['content']
+    file_data[name] = content
+    return 'Archivo creado exitosamente!'
+
+# Define la ruta para leer un archivo hfile
+
+
+@app.route('/read/<name>')
+def read(name):
+    if name in file_data:
+        return file_data[name]
     else:
-        return jsonify({'error': 'Cell not found'})
+        return 'El archivo no existe.'
 
-# Ruta para poner una celda específica
-
-
-@app.route('/put_cell', methods=['POST'])
-def put_cell():
-    row_key = request.form.get('row_key')
-    column_key = request.form.get('column_key')
-    value = request.form.get('value')
-    if row_key not in table_data:
-        table_data[row_key] = {}
-    table_data[row_key][column_key] = value
-    return jsonify({'success': True})
-
-# Ruta para eliminar una celda específica
+# Define la ruta para actualizar un archivo hfile
 
 
-@app.route('/delete_cell', methods=['POST'])
-def delete_cell():
-    row_key = request.form.get('row_key')
-    column_key = request.form.get('column_key')
-    if row_key in table_data and column_key in table_data[row_key]:
-        del table_data[row_key][column_key]
-        return jsonify({'success': True})
+@app.route('/update/<name>', methods=['POST'])
+def update(name):
+    if name in file_data:
+        content = request.form['content']
+        file_data[name] = content
+        return 'Archivo actualizado exitosamente!'
     else:
-        return jsonify({'error': 'Cell not found'})
+        return 'El archivo no existe.'
 
-# Ruta para obtener todas las celdas de una fila específica
+# Define la ruta para eliminar un archivo hfile
 
 
-@app.route('/get_row')
-def get_row():
-    row_key = request.args.get('row_key')
-    if row_key in table_data:
-        return jsonify(table_data[row_key])
+@app.route('/delete/<name>', methods=['POST'])
+def delete(name):
+    if name in file_data:
+        del file_data[name]
+        return 'Archivo eliminado exitosamente!'
     else:
-        return jsonify({'error': 'Row not found'})
-
-# Ruta para escanear todas las celdas de la tabla
-
-
-@app.route('/scan_table')
-def scan_table():
-    return jsonify(table_data)
+        return 'El archivo no existe.'
 
 
 if __name__ == '__main__':
