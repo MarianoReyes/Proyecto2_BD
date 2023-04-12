@@ -279,6 +279,9 @@ class HBaseGUI:
             return self.hbase.scan(
                 table_name, start_row, end_row, column_family, column
             )
+        elif tokens[0].lower() == "count":
+            table_name = tokens[1]
+            return self.hbase.count(table_name)
         elif tokens[0].lower() == "insert_many":
             table_name = tokens[1]
             data = json.loads(
