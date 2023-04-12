@@ -250,9 +250,9 @@ class HBaseGUI:
 
         # Configura el margen en los lados izquierdo y derecho
         self.root.pack_propagate(0)
-        self.root.geometry("400x200")
-        self.root.minsize(800, 600)
-        self.root.maxsize(1000, 800)
+        self.root.geometry("800x700")
+        self.root.minsize(800, 700)
+        self.root.maxsize(800, 700)
 
         # Crea un objeto ttk.Style y selecciona el tema "clam"
         self.style = ttk.Style()
@@ -274,16 +274,28 @@ class HBaseGUI:
         )
         self.submit_button.pack(padx=20, pady=20)
 
-        self.result_label = ttk.Label(self.root, text="", font=(
-            "Arial", 12), wraplength=500)
-        self.result_label.pack(padx=20, pady=20)
+        # Crea un widget Text y lo configura para que tenga scrollbars
+        self.result_text = tk.Text(self.root, font=(
+            "Arial", 12), wrap="word", height=10)
+        self.result_text.pack(expand=True, fill="both", padx=20)
+        self.result_text.configure(state="disabled")
+
+        self.scrollbar = tk.Scrollbar(self.root)
+        self.scrollbar.pack(side="right", fill="y", anchor="e")
+
+        self.result_text.configure(yscrollcommand=self.scrollbar.set)
+        self.scrollbar.configure(command=self.result_text.yview)
 
         self.root.mainloop()
 
     def execute_command(self):
         command = self.text_box.get()
         result = self.run_command(command)
-        self.result_label.config(text=result)
+        self.result_text.configure(state="normal")
+        self.result_text.insert(
+            "end", "-->" + command + "\n" + str(result) + "\n\n")
+        self.result_text.see("end")
+        self.result_text.configure(state="disabled")
 
     def run_command(self, command):
         tokens = command.split(" ")
