@@ -1,6 +1,7 @@
 import time
 from collections import defaultdict
 import tkinter as tk
+from tkinter import ttk
 from tkinter import messagebox
 
 
@@ -246,20 +247,42 @@ class HBaseGUI:
         self.root = tk.Tk()
         self.root.title("HBase GUI")
 
-        self.text_box = tk.Entry(self.root, width=50)
-        self.text_box.pack()
+        # Configura el margen en los lados izquierdo y derecho
+        self.root.pack_propagate(0)
+        self.root.geometry("400x200")
+        self.root.minsize(400, 200)
+        self.root.maxsize(400, 200)
 
-        self.submit_button = tk.Button(
-            self.root, text="Ejecutar comando", command=self.execute_command
+        # Crea un objeto ttk.Style y selecciona el tema "clam"
+        self.style = ttk.Style()
+        self.style.theme_use("clam")
+
+        # Configura el estilo para el widget Entry
+        self.style.configure("TEntry", foreground="black",
+                             background="white", font=("Arial", 12))
+
+        # Configura el estilo para el botón Ejecutar comando
+        self.style.configure("TButton", foreground="white",
+                             background="#007bff", font=("Arial", 12))
+
+        self.text_box = ttk.Entry(self.root, width=50, style="TEntry")
+        self.text_box.pack(padx=20, pady=20)
+
+        self.submit_button = ttk.Button(
+            self.root, text="Ejecutar comando", command=self.execute_command, style="TButton"
         )
-        self.submit_button.pack()
+        self.submit_button.pack(padx=20, pady=20)
+
+        self.result_label = ttk.Label(self.root, text="", font=("Arial", 12))
+        self.result_label.pack(padx=20, pady=20)
 
         self.root.mainloop()
 
     def execute_command(self):
         command = self.text_box.get()
         result = self.run_command(command)
-        messagebox.showinfo("Resultado", result)
+
+        self.result_label.config(text=result)
 
     def run_command(self, command):
         tokens = command.split(" ")
