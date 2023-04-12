@@ -2,6 +2,7 @@ import time
 from collections import defaultdict
 import tkinter as tk
 from tkinter import messagebox
+import json
 
 
 class HBase:
@@ -237,7 +238,13 @@ class HBaseGUI:
             return self.hbase.drop_all()
         elif tokens[0].lower() == "describe":
             table_name = tokens[1]
-            return ", ".join(self.hbase.describe(table_name))
+            if self.hbase.is_enabled(table_name):
+                status = "La tabla esta Habilitada\n\n"
+            else:
+                status = "La tabla esta Deshabilitada\n\n"
+            families = "Las column_families son:\n" + \
+                ", ".join(self.hbase.describe(table_name))
+            return status + families
         elif tokens[0].lower() == "put":
             table_name = tokens[1]
             row_key = tokens[2]
