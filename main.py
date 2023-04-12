@@ -124,7 +124,8 @@ class HBase:
                         value = rows[row_key].get(
                             (column_family, column), "No se encontró el valor."
                         )
-                        scanned_rows[row_key] = {(column_family, column): value}
+                        scanned_rows[row_key] = {
+                            (column_family, column): value}
                     else:
                         return f"La columna '{column_family}:{column}' no existe en la tabla '{table_name}'."
             return scanned_rows
@@ -194,7 +195,8 @@ class HBase:
                     if (column_family, column) not in self.tables[table_name]["rows"][
                         row_key
                     ]:
-                        self.put(table_name, row_key, column_family, column, value)
+                        self.put(table_name, row_key,
+                                 column_family, column, value)
             return f"Los datos se han insertado en la tabla '{table_name}'."
         else:
             return f"La tabla '{table_name}' no existe."
@@ -248,7 +250,13 @@ class HBaseGUI:
             return self.hbase.drop_all()
         elif tokens[0].lower() == "describe":
             table_name = tokens[1]
-            return ", ".join(self.hbase.describe(table_name))
+            if self.hbase.is_enabled(table_name):
+                status = "La tabla esta Habilitada\n\n"
+            else:
+                status = "La tabla esta Deshabilitada\n\n"
+            families = "Las column_families son:\n" + \
+                ", ".join(self.hbase.describe(table_name))
+            return status + families
         elif tokens[0].lower() == "put":
             table_name = tokens[1]
             row_key = tokens[2]
