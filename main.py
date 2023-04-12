@@ -69,7 +69,7 @@ class HBase:
         if table_name in self.tables:
             if (
                 column_family in self.tables[table_name]["column_families"]
-                and column in self.tables[table_name]["column_families"][column_family]
+                and column is not None
             ):
                 timestamp = int(time.time() * 1000)
                 self.tables[table_name]["rows"][row_key][(column_family, column)] = {
