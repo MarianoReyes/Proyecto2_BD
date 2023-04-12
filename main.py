@@ -293,7 +293,7 @@ class HBaseGUI:
         result = self.run_command(command)
         self.result_text.configure(state="normal")
         self.result_text.insert(
-            "end", "-->" + command + "\n" + str(result) + "\n\n")
+            "end", ">>> " + command + "\n" + str(result) + "\n\n")
         self.result_text.see("end")
         self.result_text.configure(state="disabled")
 
