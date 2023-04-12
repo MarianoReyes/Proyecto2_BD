@@ -274,7 +274,8 @@ class HBaseGUI:
         )
         self.submit_button.pack(padx=20, pady=20)
 
-        self.result_label = ttk.Label(self.root, text="", font=("Arial", 12))
+        self.result_label = ttk.Label(self.root, text="", font=(
+            "Arial", 12), wraplength=500)
         self.result_label.pack(padx=20, pady=20)
 
         self.root.mainloop()
@@ -282,7 +283,6 @@ class HBaseGUI:
     def execute_command(self):
         command = self.text_box.get()
         result = self.run_command(command)
-
         self.result_label.config(text=result)
 
     def run_command(self, command):
