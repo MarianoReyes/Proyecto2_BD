@@ -2,7 +2,7 @@ import time
 from collections import defaultdict
 import tkinter as tk
 from tkinter import ttk
-from tkinter import messagebox
+import json
 
 
 class HBase:
@@ -214,11 +214,13 @@ class HBase:
     def update_many(self, table_name, data):
         if table_name in self.tables:
             if self.tables[table_name]["enabled"] == True:
-                for row_key, columns in data.items():
-                    for (column_family, column), value in columns.items():
-                        self.put(table_name, row_key,
-                                 column_family, column, value)
-                return f"Los datos de la tabla '{table_name}' se han actualizado."
+                for row_key, row in data.items():
+                    for cf, columns in row.items():
+                        if cf != "row_key":
+                            for column, value in columns.items():
+                                self.put(table_name, row_key,
+                                         cf, column, value)
+                return f"Datos insertados en la tabla '{table_name}'."
             else:
                 return f"La tabla '{table_name}' está deshabilitada."
         else:
@@ -227,14 +229,13 @@ class HBase:
     def insert_many(self, table_name, data):
         if table_name in self.tables:
             if self.tables[table_name]["enabled"] == True:
-                for row_key, columns in data.items():
-                    for (column_family, column), value in columns.items():
-                        if (column_family, column) not in self.tables[table_name]["rows"][
-                            row_key
-                        ]:
-                            self.put(table_name, row_key,
-                                     column_family, column, value)
-                return f"Los datos se han insertado en la tabla '{table_name}'."
+                for row_key, row in data.items():
+                    for cf, columns in row.items():
+                        if cf != "row_key":
+                            for column, value in columns.items():
+                                self.put(table_name, row_key,
+                                         cf, column, value)
+                return f"Datos insertados en la tabla '{table_name}'."
             else:
                 return f"La tabla '{table_name}' está deshabilitada."
         else:
@@ -250,8 +251,8 @@ class HBaseGUI:
         # Configura el margen en los lados izquierdo y derecho
         self.root.pack_propagate(0)
         self.root.geometry("400x200")
-        self.root.minsize(400, 200)
-        self.root.maxsize(400, 200)
+        self.root.minsize(800, 600)
+        self.root.maxsize(1000, 800)
 
         # Crea un objeto ttk.Style y selecciona el tema "clam"
         self.style = ttk.Style()
@@ -348,15 +349,15 @@ class HBaseGUI:
             return self.hbase.count(table_name)
         elif tokens[0].lower() == "insert_many":
             table_name = tokens[1]
-            data = json.loads(
-                " ".join(tokens[2:])
-            )  # Asume que los datos se proporcionan en formato JSON
+            archivo = tokens[2]
+            with open(archivo, "r") as f:
+                data = json.load(f)
             return self.hbase.insert_many(table_name, data)
         elif tokens[0].lower() == "update_many":
             table_name = tokens[1]
-            data = json.loads(
-                " ".join(tokens[2:])
-            )  # Asume que los datos se proporcionan en formato JSON
+            archivo = tokens[2]
+            with open(archivo, "r") as f:
+                data = json.load(f)
             return self.hbase.update_many(table_name, data)
         else:
             return "Comando desconocido."
