@@ -244,7 +244,7 @@ class HBaseGUI:
             return self.hbase.disable(table_name)
         elif tokens[0].lower() == "enable":
             table_name = tokens[1]
-            return self.hbase.disable(table_name)
+            return self.hbase.enable(table_name)
         elif tokens[0].lower() == "is_enabled":
             table_name = tokens[1]
             return str(self.hbase.is_enabled(table_name))
