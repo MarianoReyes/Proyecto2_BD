@@ -10,8 +10,11 @@ class HBase:
 
     def create(self, table_name, column_families):
         if table_name not in self.tables:
+            cf_dict = {}
+            for cf in column_families:
+                cf_dict[cf] = set()
             self.tables[table_name] = {
-                "column_families": column_families,
+                "column_families": cf_dict,
                 "rows": defaultdict(dict),
                 "enabled": True,
             }
@@ -32,10 +35,16 @@ class HBase:
     def is_enabled(self, table_name):
         return self.tables.get(table_name, {}).get("enabled", False)
 
-    def alter(self, table_name, new_column_families):
+    def alter(self, table_name, column_family, *columns):
         if table_name in self.tables:
-            self.tables[table_name]["column_families"] = new_column_families
-            return f"La tabla '{table_name}' ha sido modificada."
+            if column_family in self.tables[table_name]["column_families"]:
+                for column in columns:
+                    self.tables[table_name]["column_families"][column_family].add(
+                        column
+                    )
+                return f"Las columnas han sido agregadas a la familia de columnas '{column_family}' en la tabla '{table_name}'."
+            else:
+                return f"La familia de columnas '{column_family}' no existe en la tabla '{table_name}'."
         else:
             return f"La tabla '{table_name}' no existe."
 
@@ -58,7 +67,10 @@ class HBase:
 
     def put(self, table_name, row_key, column_family, column, value):
         if table_name in self.tables:
-            if column_family in self.tables[table_name]["column_families"]:
+            if (
+                column_family in self.tables[table_name]["column_families"]
+                and column in self.tables[table_name]["column_families"][column_family]
+            ):
                 timestamp = int(time.time() * 1000)
                 self.tables[table_name]["rows"][row_key][(column_family, column)] = {
                     "value": value,
@@ -226,8 +238,9 @@ class HBaseGUI:
             return str(self.hbase.is_enabled(table_name))
         elif tokens[0].lower() == "alter":
             table_name = tokens[1]
-            new_column_families = tokens[2:]
-            return self.hbase.alter(table_name, new_column_families)
+            column_family = tokens[2]
+            columns = tokens[3:]
+            return self.hbase.alter(table_name, column_family, *columns)
         elif tokens[0].lower() == "drop":
             table_name = tokens[1]
             return self.hbase.drop(table_name)
