@@ -76,7 +76,7 @@ class HBase:
                     "value": value,
                     "timestamp": timestamp,
                 }
-                return f"Valor añadido/actualizado en la tabla '{table_name}', row_key '{row_key}', columna '{column_family}:{column}'."
+                return f"Valor '{value}' añadido/actualizado en la tabla '{table_name}', row_key '{row_key}', columna '{column_family}:{column}'."
             else:
                 return f"La columna '{column_family}:{column}' no existe en la tabla '{table_name}'."
         else:
