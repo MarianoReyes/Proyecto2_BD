@@ -214,14 +214,64 @@ class HBaseGUI:
     def run_command(self, command):
         tokens = command.split(" ")
 
-        # Verifica y ejecuta el comando correspondiente
         if tokens[0].lower() == "create":
             table_name = tokens[1]
             column_families = tokens[2:]
             return self.hbase.create(table_name, column_families)
-
-        # Agrega los otros comandos de la misma manera
-
+        elif tokens[0].lower() == "list_tables":
+            return ", ".join(self.hbase.list_tables())
+        elif tokens[0].lower() == "disable":
+            table_name = tokens[1]
+            return self.hbase.disable(table_name)
+        elif tokens[0].lower() == "is_enabled":
+            table_name = tokens[1]
+            return str(self.hbase.is_enabled(table_name))
+        elif tokens[0].lower() == "alter":
+            table_name = tokens[1]
+            new_column_families = tokens[2:]
+            return self.hbase.alter(table_name, new_column_families)
+        elif tokens[0].lower() == "drop":
+            table_name = tokens[1]
+            return self.hbase.drop(table_name)
+        elif tokens[0].lower() == "drop_all":
+            return self.hbase.drop_all()
+        elif tokens[0].lower() == "describe":
+            table_name = tokens[1]
+            return ", ".join(self.hbase.describe(table_name))
+        elif tokens[0].lower() == "put":
+            table_name = tokens[1]
+            row_key = tokens[2]
+            column_family = tokens[3]
+            column = tokens[4]
+            value = tokens[5]
+            return self.hbase.put(table_name, row_key, column_family, column, value)
+        elif tokens[0].lower() == "get":
+            table_name = tokens[1]
+            row_key = tokens[2]
+            column_family = tokens[3] if len(tokens) > 3 else None
+            column = tokens[4] if len(tokens) > 4 else None
+            return self.hbase.get(table_name, row_key, column_family, column)
+        elif tokens[0].lower() == "scan":
+            table_name = tokens[1]
+            start_row = tokens[2] if len(tokens) > 2 else None
+            end_row = tokens[3] if len(tokens) > 3 else None
+            column_family = tokens[4] if len(tokens) > 4 else None
+            column = tokens[5] if len(tokens) > 5 else None
+            return self.hbase.scan(
+                table_name, start_row, end_row, column_family, column
+            )
+        elif tokens[0].lower() == "insert_many":
+            table_name = tokens[1]
+            data = json.loads(
+                " ".join(tokens[2:])
+            )  # Asume que los datos se proporcionan en formato JSON
+            return self.hbase.insert_many(table_name, data)
+        elif tokens[0].lower() == "update_many":
+            table_name = tokens[1]
+            data = json.loads(
+                " ".join(tokens[2:])
+            )  # Asume que los datos se proporcionan en formato JSON
+            return self.hbase.update_many(table_name, data)
         else:
             return "Comando desconocido."
 
