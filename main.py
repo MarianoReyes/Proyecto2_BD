@@ -44,14 +44,17 @@ class HBase:
 
     def alter(self, table_name, column_family, *columns):
         if table_name in self.tables:
-            if column_family in self.tables[table_name]["column_families"]:
-                for column in columns:
-                    self.tables[table_name]["column_families"][column_family].add(
-                        column
-                    )
-                return f"Las columnas han sido agregadas a la familia de columnas '{column_family}' en la tabla '{table_name}'."
+            if self.tables[table_name]["enabled"] == True:
+                if column_family in self.tables[table_name]["column_families"]:
+                    for column in columns:
+                        self.tables[table_name]["column_families"][column_family].add(
+                            column
+                        )
+                    return f"Las columnas han sido agregadas a la familia de columnas '{column_family}' en la tabla '{table_name}'."
+                else:
+                    return f"La familia de columnas '{column_family}' no existe en la tabla '{table_name}'."
             else:
-                return f"La familia de columnas '{column_family}' no existe en la tabla '{table_name}'."
+                return f"La tabla '{table_name}' está deshabilitada."
         else:
             return f"La tabla '{table_name}' no existe."
 
@@ -74,38 +77,44 @@ class HBase:
 
     def put(self, table_name, row_key, column_family, column, value):
         if table_name in self.tables:
-            if (
-                column_family in self.tables[table_name]["column_families"]
-                and column is not None
-            ):
-                timestamp = int(time.time() * 1000)
-                self.tables[table_name]["rows"][row_key][(column_family, column)] = {
-                    "value": value,
-                    "timestamp": timestamp,
-                }
-                return f"Valor '{value}' añadido/actualizado en la tabla '{table_name}', row_key '{row_key}', columna '{column_family}:{column}'."
+            if self.tables[table_name]["enabled"] == True:
+                if (
+                    column_family in self.tables[table_name]["column_families"]
+                    and column is not None
+                ):
+                    timestamp = int(time.time() * 1000)
+                    self.tables[table_name]["rows"][row_key][(column_family, column)] = {
+                        "value": value,
+                        "timestamp": timestamp,
+                    }
+                    return f"Valor '{value}' añadido/actualizado en la tabla '{table_name}', row_key '{row_key}', columna '{column_family}:{column}'."
+                else:
+                    return f"La columna '{column_family}:{column}' no existe en la tabla '{table_name}'."
             else:
-                return f"La columna '{column_family}:{column}' no existe en la tabla '{table_name}'."
+                return f"La tabla '{table_name}' está deshabilitada."
         else:
             return f"La tabla '{table_name}' no existe."
 
     def get(self, table_name, row_key, column_family=None, column=None):
         if table_name in self.tables:
-            rows = self.tables[table_name]["rows"]
-            if row_key in rows:
-                if column_family is None and column is None:
-                    return rows[row_key]
-                elif (
-                    column_family in self.tables[table_name]["column_families"]
-                    and column is not None
-                ):
-                    return rows[row_key].get(
-                        (column_family, column), "No se encontró el valor."
-                    )
+            if self.tables[table_name]["enabled"] == True:
+                rows = self.tables[table_name]["rows"]
+                if row_key in rows:
+                    if column_family is None and column is None:
+                        return rows[row_key]
+                    elif (
+                        column_family in self.tables[table_name]["column_families"]
+                        and column is not None
+                    ):
+                        return rows[row_key].get(
+                            (column_family, column), "No se encontró el valor."
+                        )
+                    else:
+                        return f"La columna '{column_family}:{column}' no existe en la tabla '{table_name}'."
                 else:
-                    return f"La columna '{column_family}:{column}' no existe en la tabla '{table_name}'."
+                    return f"El row_key '{row_key}' no existe en la tabla '{table_name}'."
             else:
-                return f"El row_key '{row_key}' no existe en la tabla '{table_name}'."
+                return f"La tabla '{table_name}' está deshabilitada."
         else:
             return f"La tabla '{table_name}' no existe."
 
@@ -113,98 +122,120 @@ class HBase:
         self, table_name, start_row=None, end_row=None, column_family=None, column=None
     ):
         if table_name in self.tables:
-            rows = self.tables[table_name]["rows"]
-            if start_row is None:
-                start_row = min(rows.keys())
-            if end_row is None:
-                end_row = max(rows.keys())
+            if self.tables[table_name]["enabled"] == True:
+                rows = self.tables[table_name]["rows"]
+                if start_row is None:
+                    start_row = min(rows.keys())
+                if end_row is None:
+                    end_row = max(rows.keys())
 
-            scanned_rows = {}
-            for row_key in sorted(rows.keys()):
-                if start_row <= row_key <= end_row:
-                    if column_family is None and column is None:
-                        scanned_rows[row_key] = rows[row_key]
-                    elif (
-                        column_family in self.tables[table_name]["column_families"]
-                        and column is not None
-                    ):
-                        value = rows[row_key].get(
-                            (column_family, column), "No se encontró el valor."
-                        )
-                        scanned_rows[row_key] = {
-                            (column_family, column): value}
-                    else:
-                        return f"La columna '{column_family}:{column}' no existe en la tabla '{table_name}'."
-            return scanned_rows
+                scanned_rows = {}
+                for row_key in sorted(rows.keys()):
+                    if start_row <= row_key <= end_row:
+                        if column_family is None and column is None:
+                            scanned_rows[row_key] = rows[row_key]
+                        elif (
+                            column_family in self.tables[table_name]["column_families"]
+                            and column is not None
+                        ):
+                            value = rows[row_key].get(
+                                (column_family, column), "No se encontró el valor."
+                            )
+                            scanned_rows[row_key] = {
+                                (column_family, column): value}
+                        else:
+                            return f"La columna '{column_family}:{column}' no existe en la tabla '{table_name}'."
+                return scanned_rows
+            else:
+                return f"La tabla '{table_name}' está deshabilitada."
         else:
             return f"La tabla '{table_name}' no existe."
 
     def delete(self, table_name, row_key, column_family=None, column=None):
         if table_name in self.tables:
-            rows = self.tables[table_name]["rows"]
-            if row_key in rows:
-                if column_family is None and column is None:
-                    del rows[row_key]
-                    return f"El row_key '{row_key}' ha sido eliminado de la tabla '{table_name}'."
-                elif (
-                    column_family in self.tables[table_name]["column_families"]
-                    and column is not None
-                ):
-                    if (column_family, column) in rows[row_key]:
-                        del rows[row_key][(column_family, column)]
-                        return f"El valor de la columna '{column_family}:{column}' ha sido eliminado en el row_key '{row_key}' de la tabla '{table_name}'."
+            if self.tables[table_name]["enabled"] == True:
+                rows = self.tables[table_name]["rows"]
+                if row_key in rows:
+                    if column_family is None and column is None:
+                        del rows[row_key]
+                        return f"El row_key '{row_key}' ha sido eliminado de la tabla '{table_name}'."
+                    elif (
+                        column_family in self.tables[table_name]["column_families"]
+                        and column is not None
+                    ):
+                        if (column_family, column) in rows[row_key]:
+                            del rows[row_key][(column_family, column)]
+                            return f"El valor de la columna '{column_family}:{column}' ha sido eliminado en el row_key '{row_key}' de la tabla '{table_name}'."
+                        else:
+                            return f"No se encontró el valor de la columna '{column_family}:{column}' en el row_key '{row_key}' de la tabla '{table_name}'."
                     else:
-                        return f"No se encontró el valor de la columna '{column_family}:{column}' en el row_key '{row_key}' de la tabla '{table_name}'."
+                        return f"La columna '{column_family}:{column}' no existe en la tabla '{table_name}'."
                 else:
-                    return f"La columna '{column_family}:{column}' no existe en la tabla '{table_name}'."
+                    return f"El row_key '{row_key}' no existe en la tabla '{table_name}'."
             else:
-                return f"El row_key '{row_key}' no existe en la tabla '{table_name}'."
+                return f"La tabla '{table_name}' está deshabilitada."
         else:
             return f"La tabla '{table_name}' no existe."
 
     def delete_all(self, table_name):
         if table_name in self.tables:
-            self.tables[table_name]["rows"].clear()
-            return f"Todos los datos en la tabla '{table_name}' han sido eliminados."
+            if self.tables[table_name]["enabled"] == True:
+                self.tables[table_name]["rows"].clear()
+                return f"Todos los datos en la tabla '{table_name}' han sido eliminados."
+            else:
+                return f"La tabla '{table_name}' está deshabilitada."
         else:
             return f"La tabla '{table_name}' no existe."
 
     def count(self, table_name):
         if table_name in self.tables:
-            return len(self.tables[table_name]["rows"])
+            if self.tables[table_name]["enabled"] == True:
+                return len(self.tables[table_name]["rows"])
+            else:
+                return f"La tabla '{table_name}' está deshabilitada."
         else:
             return f"La tabla '{table_name}' no existe."
 
     def truncate(self, table_name):
         if table_name in self.tables:
-            column_families = self.tables[table_name]["column_families"]
-            self.disable(table_name)
-            self.drop(table_name)
-            self.create(table_name, column_families)
-            return f"La tabla '{table_name}' ha sido truncada."
+            if self.tables[table_name]["enabled"] == True:
+                column_families = self.tables[table_name]["column_families"]
+                self.disable(table_name)
+                self.drop(table_name)
+                self.create(table_name, column_families)
+                return f"La tabla '{table_name}' ha sido truncada."
+            else:
+                return f"La tabla '{table_name}' está deshabilitada."
         else:
             return f"La tabla '{table_name}' no existe."
 
     # Puntos extra
     def update_many(self, table_name, data):
         if table_name in self.tables:
-            for row_key, columns in data.items():
-                for (column_family, column), value in columns.items():
-                    self.put(table_name, row_key, column_family, column, value)
-            return f"Los datos de la tabla '{table_name}' se han actualizado."
+            if self.tables[table_name]["enabled"] == True:
+                for row_key, columns in data.items():
+                    for (column_family, column), value in columns.items():
+                        self.put(table_name, row_key,
+                                 column_family, column, value)
+                return f"Los datos de la tabla '{table_name}' se han actualizado."
+            else:
+                return f"La tabla '{table_name}' está deshabilitada."
         else:
             return f"La tabla '{table_name}' no existe."
 
     def insert_many(self, table_name, data):
         if table_name in self.tables:
-            for row_key, columns in data.items():
-                for (column_family, column), value in columns.items():
-                    if (column_family, column) not in self.tables[table_name]["rows"][
-                        row_key
-                    ]:
-                        self.put(table_name, row_key,
-                                 column_family, column, value)
-            return f"Los datos se han insertado en la tabla '{table_name}'."
+            if self.tables[table_name]["enabled"] == True:
+                for row_key, columns in data.items():
+                    for (column_family, column), value in columns.items():
+                        if (column_family, column) not in self.tables[table_name]["rows"][
+                            row_key
+                        ]:
+                            self.put(table_name, row_key,
+                                     column_family, column, value)
+                return f"Los datos se han insertado en la tabla '{table_name}'."
+            else:
+                return f"La tabla '{table_name}' está deshabilitada."
         else:
             return f"La tabla '{table_name}' no existe."
 
