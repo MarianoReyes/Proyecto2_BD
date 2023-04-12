@@ -30,7 +30,7 @@ class HBase:
             self.tables[table_name]["enabled"] = False
             return f"Tabla '{table_name}' deshabilitada."
         else:
-            return f"La tabla '{table_name}' no existe."
+            return f"La tabla '{table_name}' no existe o está deshabilitada."
 
     def is_enabled(self, table_name):
         return self.tables.get(table_name, {}).get("enabled", False)
@@ -46,14 +46,14 @@ class HBase:
             else:
                 return f"La familia de columnas '{column_family}' no existe en la tabla '{table_name}'."
         else:
-            return f"La tabla '{table_name}' no existe."
+            return f"La tabla '{table_name}' no existe o está deshabilitada."
 
     def drop(self, table_name):
         if table_name in self.tables:
             del self.tables[table_name]
             return f"Tabla '{table_name}' eliminada."
         else:
-            return f"La tabla '{table_name}' no existe."
+            return f"La tabla '{table_name}' no existe o está deshabilitada."
 
     def drop_all(self):
         self.tables.clear()
@@ -63,7 +63,7 @@ class HBase:
         if table_name in self.tables:
             return self.tables[table_name]["column_families"]
         else:
-            return f"La tabla '{table_name}' no existe."
+            return f"La tabla '{table_name}' no existe o está deshabilitada."
 
     def put(self, table_name, row_key, column_family, column, value):
         if table_name in self.tables:
@@ -80,7 +80,7 @@ class HBase:
             else:
                 return f"La columna '{column_family}:{column}' no existe en la tabla '{table_name}'."
         else:
-            return f"La tabla '{table_name}' no existe."
+            return f"La tabla '{table_name}' no existe o está deshabilitada."
 
     def get(self, table_name, row_key, column_family=None, column=None):
         if table_name in self.tables:
@@ -100,7 +100,7 @@ class HBase:
             else:
                 return f"El row_key '{row_key}' no existe en la tabla '{table_name}'."
         else:
-            return f"La tabla '{table_name}' no existe."
+            return f"La tabla '{table_name}' no existe o está deshabilitada."
 
     def scan(
         self, table_name, start_row=None, end_row=None, column_family=None, column=None
@@ -130,7 +130,7 @@ class HBase:
                         return f"La columna '{column_family}:{column}' no existe en la tabla '{table_name}'."
             return scanned_rows
         else:
-            return f"La tabla '{table_name}' no existe."
+            return f"La tabla '{table_name}' no existe o está deshabilitada."
 
     def delete(self, table_name, row_key, column_family=None, column=None):
         if table_name in self.tables:
@@ -153,20 +153,20 @@ class HBase:
             else:
                 return f"El row_key '{row_key}' no existe en la tabla '{table_name}'."
         else:
-            return f"La tabla '{table_name}' no existe."
+            return f"La tabla '{table_name}' no existe o está deshabilitada."
 
     def delete_all(self, table_name):
         if table_name in self.tables:
             self.tables[table_name]["rows"].clear()
             return f"Todos los datos en la tabla '{table_name}' han sido eliminados."
         else:
-            return f"La tabla '{table_name}' no existe."
+            return f"La tabla '{table_name}' no existe o está deshabilitada."
 
     def count(self, table_name):
         if table_name in self.tables:
             return len(self.tables[table_name]["rows"])
         else:
-            return f"La tabla '{table_name}' no existe."
+            return f"La tabla '{table_name}' no existe o está deshabilitada."
 
     def truncate(self, table_name):
         if table_name in self.tables:
@@ -176,7 +176,7 @@ class HBase:
             self.create(table_name, column_families)
             return f"La tabla '{table_name}' ha sido truncada."
         else:
-            return f"La tabla '{table_name}' no existe."
+            return f"La tabla '{table_name}' no existe o está deshabilitada."
 
     # Puntos extra
     def update_many(self, table_name, data):
@@ -186,7 +186,7 @@ class HBase:
                     self.put(table_name, row_key, column_family, column, value)
             return f"Los datos de la tabla '{table_name}' se han actualizado."
         else:
-            return f"La tabla '{table_name}' no existe."
+            return f"La tabla '{table_name}' no existe o está deshabilitada."
 
     def insert_many(self, table_name, data):
         if table_name in self.tables:
@@ -199,7 +199,7 @@ class HBase:
                                  column_family, column, value)
             return f"Los datos se han insertado en la tabla '{table_name}'."
         else:
-            return f"La tabla '{table_name}' no existe."
+            return f"La tabla '{table_name}' no existe o está deshabilitada."
 
 
 class HBaseGUI:
