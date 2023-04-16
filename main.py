@@ -5,35 +5,43 @@ from tkinter import ttk
 import json
 import random
 import string
+import pandas as pd
 
+# Configurar opciones de visualización para mostrar toda la data
+pd.set_option("display.max_columns", None)
+pd.set_option("display.width", None)
 
 # Data inicial
-def generar_usuario():
+def generar_usuario(row_key):
     return {
-        "info_personal": {
-            "nombre": "".join(
-                random.choices(string.ascii_uppercase + string.ascii_lowercase, k=5)
-            ),
-            "edad": random.randint(18, 99),
-        },
-        "contacto": {
-            "email": "".join(random.choices(string.ascii_lowercase, k=5))
-            + "@example.com",
-            "telefono": "555" + str(random.randint(10000, 99999)),
-        },
+        row_key: {
+            "info_personal": {
+                "nombre": "".join(
+                    random.choices(string.ascii_uppercase + string.ascii_lowercase, k=5)
+                ),
+                "edad": random.randint(18, 99),
+            },
+            "contacto": {
+                "email": "".join(random.choices(string.ascii_lowercase, k=5))
+                + "@example.com",
+                "telefono": "555" + str(random.randint(10000, 99999)),
+            },
+        }
     }
 
 
-def generar_compra():
+def generar_compra(row_key):
     return {
-        "producto": {
-            "nombre": "".join(random.choices(string.ascii_uppercase, k=3)),
-            "precio": random.uniform(10, 100),
-        },
-        "transaccion": {
-            "fecha": f"2023-04-{random.randint(1, 16)}",
-            "cantidad": random.randint(1, 10),
-        },
+        row_key: {
+            "producto": {
+                "nombre": "".join(random.choices(string.ascii_uppercase, k=3)),
+                "precio": random.uniform(10, 100),
+            },
+            "transaccion": {
+                "fecha": f"2023-04-{random.randint(1, 16)}",
+                "cantidad": random.randint(1, 10),
+            },
+        }
     }
 
 
@@ -175,13 +183,19 @@ class HBase:
                             column_family in self.tables[table_name]["column_families"]
                             and column is not None
                         ):
-                            value = rows[row_key].get(
-                                (column_family, column), "No se encontró el valor."
+                            value, timestamp = rows[row_key].get(
+                                (column_family, column),
+                                ("No se encontró el valor.", None),
                             )
-                            scanned_rows[row_key] = {(column_family, column): value}
+                            scanned_rows[row_key] = {
+                                (column_family, column): {
+                                    "value": value,
+                                    "timestamp": timestamp,
+                                }
+                            }
                         else:
                             return f"La columna '{column_family}:{column}' no existe en la tabla '{table_name}'."
-                return scanned_rows
+                return pd.DataFrame(scanned_rows).transpose()
             else:
                 return f"La tabla '{table_name}' está deshabilitada."
         else:
@@ -258,7 +272,7 @@ class HBase:
                         if cf != "row_key":
                             for column, value in columns.items():
                                 self.put(table_name, row_key, cf, column, value)
-                return f"Datos insertados en la tabla '{table_name}'."
+                return f"Datos actualizados en la tabla '{table_name}'."
             else:
                 return f"La tabla '{table_name}' está deshabilitada."
         else:
@@ -287,9 +301,9 @@ class HBaseGUI:
 
         # Configura el margen en los lados izquierdo y derecho
         self.root.pack_propagate(0)
-        self.root.geometry("800x700")
-        self.root.minsize(800, 700)
-        self.root.maxsize(800, 700)
+        self.root.geometry("1500x700")
+        self.root.minsize(1500, 700)
+        self.root.maxsize(1500, 700)
 
         # Crea un objeto ttk.Style y selecciona el tema "clam"
         self.style = ttk.Style()
@@ -399,9 +413,21 @@ class HBaseGUI:
             return self.hbase.scan(
                 table_name, start_row, end_row, column_family, column
             )
+        elif tokens[0].lower() == "delete":
+            table_name = tokens[1]
+            row_key = tokens[2]
+            column_family = tokens[3] if len(tokens) > 3 else None
+            column = tokens[4] if len(tokens) > 4 else None
+            return self.hbase.delete(table_name, row_key, column_family, column)
+        elif tokens[0].lower() == "delete_all":
+            table_name = tokens[1]
+            return self.hbase.delete_all(table_name)
         elif tokens[0].lower() == "count":
             table_name = tokens[1]
             return self.hbase.count(table_name)
+        elif tokens[0].lower() == "truncate":
+            table_name = tokens[1]
+            return self.hbase.truncate(table_name)
         elif tokens[0].lower() == "insert_many":
             table_name = tokens[1]
             archivo = tokens[2]
@@ -414,6 +440,7 @@ class HBaseGUI:
             with open(archivo, "r") as f:
                 data = json.load(f)
             return self.hbase.update_many(table_name, data)
+
         else:
             return "Comando desconocido."
 
@@ -421,17 +448,18 @@ class HBaseGUI:
 # Instancia la clase HBase y la clase HBaseGUI
 hbase = HBase()
 
-# Crear dataset representativo
-usuarios = {f"usuario_{i}": generar_usuario() for i in range(10)}
-compras = {f"compra_{i}": generar_compra() for i in range(20)}
-
-# Crear tablas
+# Crea una tabla de usuarios y compras con sus respectivas familias de columnas
 hbase.create("usuarios", ["info_personal", "contacto"])
 hbase.create("compras", ["producto", "transaccion"])
 
-# Insertar datos en las tablas
-hbase.insert_many("usuarios", usuarios)
-hbase.insert_many("compras", compras)
+# Genera datos de usuarios y compras y agrega a la instancia de HBase
+for i in range(10):
+    usuario = generar_usuario(f"usuario_{i}")
+    hbase.insert_many("usuarios", usuario)
+
+    compra = generar_compra(f"compra_{i}")
+    hbase.insert_many("compras", compra)
+
 
 # Simular HFiles
 hfiles = {

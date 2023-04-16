@@ -1,0 +1,108 @@
+--- Create Table ---
+
+create proveedor info_personal contacto
+
+--- list_tables ---
+
+list_tables
+
+--- disable ---
+
+disable proveedor
+
+--- is_enable ---
+
+is_enabled proveedor
+
+--- enable ---
+
+enable proveedor
+
+--- alter table ---
+
+
+
+--- describe ----
+
+describe usuarios
+
+
+--- drop ----
+
+drop
+
+--- drop all ---
+
+drop all 
+
+
+--------------------- DML ---------------------------
+
+--- put ---
+
+put usuarios usuario_9 info_personal nombre "usuario9" 
+
+
+--- get ---
+
+get usuarios usuario_9 info_personal nombre
+
+
+--- scan ----
+
+scan usuarios (Modifcar el formato para que se mire completo)
+
+
+--- delete ----
+
+delete usuarios usuario_9 info_personal nombre 
+
+--- delete all ---
+
+delete_all usuarios
+
+--- count ----
+
+count compras
+
+
+--- truncate ---
+
+truncate usuarios (Aun falta mostrar paso a paso)
+
+
+--- insert many ---
+
+insert_many usuarios data.json (mostrar error si el formato no es correcto)
+
+
+--- update_many ---
+
+update_many usuarios data.json
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+put proveedor usario_0 info_personal salario "9000"
+
+ 
+
+
+Falta
+
+--- mejorar el alter ---
+
+alter proveedor info_personal contacto salario
+
