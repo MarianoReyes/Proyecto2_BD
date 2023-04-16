@@ -3,6 +3,38 @@ from collections import defaultdict
 import tkinter as tk
 from tkinter import ttk
 import json
+import random
+import string
+
+
+# Data inicial
+def generar_usuario():
+    return {
+        "info_personal": {
+            "nombre": "".join(
+                random.choices(string.ascii_uppercase + string.ascii_lowercase, k=5)
+            ),
+            "edad": random.randint(18, 99),
+        },
+        "contacto": {
+            "email": "".join(random.choices(string.ascii_lowercase, k=5))
+            + "@example.com",
+            "telefono": "555" + str(random.randint(10000, 99999)),
+        },
+    }
+
+
+def generar_compra():
+    return {
+        "producto": {
+            "nombre": "".join(random.choices(string.ascii_uppercase, k=3)),
+            "precio": random.uniform(10, 100),
+        },
+        "transaccion": {
+            "fecha": f"2023-04-{random.randint(1, 16)}",
+            "cantidad": random.randint(1, 10),
+        },
+    }
 
 
 class HBase:
@@ -84,7 +116,9 @@ class HBase:
                     and column is not None
                 ):
                     timestamp = int(time.time() * 1000)
-                    self.tables[table_name]["rows"][row_key][(column_family, column)] = {
+                    self.tables[table_name]["rows"][row_key][
+                        (column_family, column)
+                    ] = {
                         "value": value,
                         "timestamp": timestamp,
                     }
@@ -113,7 +147,9 @@ class HBase:
                     else:
                         return f"La columna '{column_family}:{column}' no existe en la tabla '{table_name}'."
                 else:
-                    return f"El row_key '{row_key}' no existe en la tabla '{table_name}'."
+                    return (
+                        f"El row_key '{row_key}' no existe en la tabla '{table_name}'."
+                    )
             else:
                 return f"La tabla '{table_name}' está deshabilitada."
         else:
@@ -142,8 +178,7 @@ class HBase:
                             value = rows[row_key].get(
                                 (column_family, column), "No se encontró el valor."
                             )
-                            scanned_rows[row_key] = {
-                                (column_family, column): value}
+                            scanned_rows[row_key] = {(column_family, column): value}
                         else:
                             return f"La columna '{column_family}:{column}' no existe en la tabla '{table_name}'."
                 return scanned_rows
@@ -172,7 +207,9 @@ class HBase:
                     else:
                         return f"La columna '{column_family}:{column}' no existe en la tabla '{table_name}'."
                 else:
-                    return f"El row_key '{row_key}' no existe en la tabla '{table_name}'."
+                    return (
+                        f"El row_key '{row_key}' no existe en la tabla '{table_name}'."
+                    )
             else:
                 return f"La tabla '{table_name}' está deshabilitada."
         else:
@@ -182,7 +219,9 @@ class HBase:
         if table_name in self.tables:
             if self.tables[table_name]["enabled"] == True:
                 self.tables[table_name]["rows"].clear()
-                return f"Todos los datos en la tabla '{table_name}' han sido eliminados."
+                return (
+                    f"Todos los datos en la tabla '{table_name}' han sido eliminados."
+                )
             else:
                 return f"La tabla '{table_name}' está deshabilitada."
         else:
@@ -218,8 +257,7 @@ class HBase:
                     for cf, columns in row.items():
                         if cf != "row_key":
                             for column, value in columns.items():
-                                self.put(table_name, row_key,
-                                         cf, column, value)
+                                self.put(table_name, row_key, cf, column, value)
                 return f"Datos insertados en la tabla '{table_name}'."
             else:
                 return f"La tabla '{table_name}' está deshabilitada."
@@ -233,8 +271,7 @@ class HBase:
                     for cf, columns in row.items():
                         if cf != "row_key":
                             for column, value in columns.items():
-                                self.put(table_name, row_key,
-                                         cf, column, value)
+                                self.put(table_name, row_key, cf, column, value)
                 return f"Datos insertados en la tabla '{table_name}'."
             else:
                 return f"La tabla '{table_name}' está deshabilitada."
@@ -259,24 +296,30 @@ class HBaseGUI:
         self.style.theme_use("clam")
 
         # Configura el estilo para el widget Entry
-        self.style.configure("TEntry", foreground="black",
-                             background="white", font=("Arial", 12))
+        self.style.configure(
+            "TEntry", foreground="black", background="white", font=("Arial", 12)
+        )
 
         # Configura el estilo para el botón Ejecutar comando
-        self.style.configure("TButton", foreground="white",
-                             background="#007bff", font=("Arial", 12))
+        self.style.configure(
+            "TButton", foreground="white", background="#007bff", font=("Arial", 12)
+        )
 
         self.text_box = ttk.Entry(self.root, width=50, style="TEntry")
         self.text_box.pack(padx=20, pady=20)
 
         self.submit_button = ttk.Button(
-            self.root, text="Ejecutar comando", command=self.execute_command, style="TButton"
+            self.root,
+            text="Ejecutar comando",
+            command=self.execute_command,
+            style="TButton",
         )
         self.submit_button.pack(padx=20, pady=20)
 
         # Crea un widget Text y lo configura para que tenga scrollbars
-        self.result_text = tk.Text(self.root, font=(
-            "Arial", 12), wrap="word", height=10)
+        self.result_text = tk.Text(
+            self.root, font=("Arial", 12), wrap="word", height=10
+        )
         self.result_text.pack(expand=True, fill="both", padx=20)
         self.result_text.configure(state="disabled")
 
@@ -292,8 +335,7 @@ class HBaseGUI:
         command = self.text_box.get()
         result = self.run_command(command)
         self.result_text.configure(state="normal")
-        self.result_text.insert(
-            "end", ">>> " + command + "\n" + str(result) + "\n\n")
+        self.result_text.insert("end", ">>> " + command + "\n" + str(result) + "\n\n")
         self.result_text.see("end")
         self.result_text.configure(state="disabled")
 
@@ -331,8 +373,9 @@ class HBaseGUI:
                 status = "La tabla esta Habilitada\n\n"
             else:
                 status = "La tabla esta Deshabilitada\n\n"
-            families = "Las column_families son:\n" + \
-                ", ".join(self.hbase.describe(table_name))
+            families = "Las column_families son:\n" + ", ".join(
+                self.hbase.describe(table_name)
+            )
             return status + families
         elif tokens[0].lower() == "put":
             table_name = tokens[1]
@@ -377,4 +420,37 @@ class HBaseGUI:
 
 # Instancia la clase HBase y la clase HBaseGUI
 hbase = HBase()
+
+# Crear dataset representativo
+usuarios = {f"usuario_{i}": generar_usuario() for i in range(10)}
+compras = {f"compra_{i}": generar_compra() for i in range(20)}
+
+# Crear tablas
+hbase.create("usuarios", ["info_personal", "contacto"])
+hbase.create("compras", ["producto", "transaccion"])
+
+# Insertar datos en las tablas
+hbase.insert_many("usuarios", usuarios)
+hbase.insert_many("compras", compras)
+
+# Simular HFiles
+hfiles = {
+    "usuarios": hbase.scan("usuarios"),
+    "compras": hbase.scan("compras"),
+}
+
+# Modificaciones en HBase (para ejemplificar cambios en HFiles)
+hbase.put("usuarios", "usuario_10", "info_personal", "nombre", "John Doe")
+hbase.put("compras", "compra_20", "producto", "nombre", "ABC")
+hbase.put("compras", "compra_20", "producto", "precio", "50.0")
+hbase.put("compras", "compra_20", "transaccion", "fecha", "2023-04-16")
+hbase.put("compras", "compra_20", "transaccion", "cantidad", "3")
+
+# Actualizar HFiles
+hfiles["usuarios"] = hbase.scan("usuarios")
+hfiles["compras"] = hbase.scan("compras")
+
+# Verificar que los HFiles se han actualizado
+print(hfiles)
+
 hbase_gui = HBaseGUI(hbase)
