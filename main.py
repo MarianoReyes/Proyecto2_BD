@@ -550,24 +550,4 @@ for i in range(10):
     compra = generar_compra(f"compra_{i}")
     hbase.insert_many("compras", compra)
 
-
-# Simular HFiles
-hfiles = {
-    "usuarios": hbase.scan("usuarios"),
-    "compras": hbase.scan("compras"),
-}
-
-# Modificaciones en HBase (para ejemplificar cambios en HFiles)
-hbase.put("compras", "compra_20", "producto", "nombre", "ABC")
-hbase.put("compras", "compra_20", "producto", "precio", "50.0")
-hbase.put("compras", "compra_20", "transaccion", "fecha", "2023-04-16")
-hbase.put("compras", "compra_20", "transaccion", "cantidad", "3")
-
-# Actualizar HFiles
-hfiles["usuarios"] = hbase.scan("usuarios")
-hfiles["compras"] = hbase.scan("compras")
-
-# Verificar que los HFiles se han actualizado
-print(hfiles)
-
 hbase_gui = HBaseGUI(hbase)
