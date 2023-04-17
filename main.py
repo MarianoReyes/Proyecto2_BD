@@ -39,7 +39,7 @@ def generar_compra(row_key):
             },
             "transaccion": {
                 "fecha": f"2023-04-{random.randint(1, 16)}",
-                "cantidad": random.randint(1, 10),
+                "cantidad": random.randint(1, 11),
             },
         }
     }
@@ -558,7 +558,6 @@ hfiles = {
 }
 
 # Modificaciones en HBase (para ejemplificar cambios en HFiles)
-hbase.put("usuarios", "usuario_10", "info_personal", "nombre", "John Doe")
 hbase.put("compras", "compra_20", "producto", "nombre", "ABC")
 hbase.put("compras", "compra_20", "producto", "precio", "50.0")
 hbase.put("compras", "compra_20", "transaccion", "fecha", "2023-04-16")
