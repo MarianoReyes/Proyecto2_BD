@@ -20,6 +20,14 @@ enable proveedor
 
 --- alter table ---
 
+Modificar
+
+alter usuarios modify info_personal info_person
+
+
+Eliminar
+
+alter usuarios delete info_person
 
 
 --- describe ----
@@ -79,30 +87,3 @@ insert_many usuarios data.json
 --- update_many ---
 
 update_many usuarios data_update.json
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-put proveedor usario_0 info_personal salario "9000"
-
- 
-
-
-Falta
-
---- mejorar el alter ---
-
-alter proveedor info_personal contacto salario
-

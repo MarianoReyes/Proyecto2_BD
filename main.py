@@ -83,15 +83,49 @@ class HBase:
     def is_enabled(self, table_name):
         return self.tables.get(table_name, {}).get("enabled", False)
 
-    def alter(self, table_name, column_family, *columns):
+    def alter(
+        self, table_name, column_family, action, *columns, new_column_family=None
+    ):
         if table_name in self.tables:
             if self.tables[table_name]["enabled"] == True:
                 if column_family in self.tables[table_name]["column_families"]:
-                    for column in columns:
-                        self.tables[table_name]["column_families"][column_family].add(
-                            column
-                        )
-                    return f"Las columnas han sido agregadas a la familia de columnas '{column_family}' en la tabla '{table_name}'."
+                    if action == "modify":
+                        if new_column_family is not None:
+                            self.tables[table_name]["column_families"][
+                                new_column_family
+                            ] = self.tables[table_name]["column_families"].pop(
+                                column_family
+                            )
+                            for row_key in self.tables[table_name]["rows"]:
+                                for (cf, column) in list(
+                                    self.tables[table_name]["rows"][row_key].keys()
+                                ):
+                                    if cf == column_family:
+                                        value, timestamp = self.tables[table_name][
+                                            "rows"
+                                        ][row_key].pop((cf, column))
+                                        self.tables[table_name]["rows"][row_key][
+                                            (new_column_family, column)
+                                        ] = {
+                                            "value": value,
+                                            "timestamp": timestamp,
+                                        }
+                            return f"La familia de columnas '{column_family}' ha sido modificada a '{new_column_family}' en la tabla '{table_name}'."
+                        else:
+                            return f"El nuevo nombre de la familia de columnas no puede ser None."
+                    elif action == "delete":
+                        del self.tables[table_name]["column_families"][column_family]
+                        for row_key in self.tables[table_name]["rows"]:
+                            for (cf, column) in list(
+                                self.tables[table_name]["rows"][row_key].keys()
+                            ):
+                                if cf == column_family:
+                                    del self.tables[table_name]["rows"][row_key][
+                                        (cf, column)
+                                    ]
+                        return f"La familia de columnas '{column_family}' ha sido eliminada de la tabla '{table_name}'."
+                    else:
+                        return f"La acción '{action}' no es válida. Utilice 'modify' o 'delete'."
                 else:
                     return f"La familia de columnas '{column_family}' no existe en la tabla '{table_name}'."
             else:
@@ -415,9 +449,23 @@ class HBaseGUI:
             return str(self.hbase.is_enabled(table_name))
         elif tokens[0].lower() == "alter":
             table_name = tokens[1]
-            column_family = tokens[2]
-            columns = tokens[3:]
-            return self.hbase.alter(table_name, column_family, *columns)
+            action = tokens[2].lower()
+            column_family = tokens[3]
+
+            if action == "modify":
+                new_column_family = tokens[4]
+                columns = tokens[5:]
+                return self.hbase.alter(
+                    table_name,
+                    column_family,
+                    action,
+                    *columns,
+                    new_column_family=new_column_family,
+                )
+            elif action == "delete":
+                return self.hbase.alter(table_name, column_family, action)
+            else:
+                return "Invalid action. Use 'modify' or 'delete'."
         elif tokens[0].lower() == "drop":
             table_name = tokens[1]
             return self.hbase.drop(table_name)
