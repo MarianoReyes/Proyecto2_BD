@@ -50,7 +50,7 @@ get usuarios usuario_9 info_personal nombre
 
 --- scan ----
 
-scan usuarios (Modifcar el formato para que se mire completo)
+scan usuarios
 
 
 --- delete ----
@@ -68,17 +68,17 @@ count compras
 
 --- truncate ---
 
-truncate usuarios (Aun falta mostrar paso a paso)
+truncate usuarios
 
 
 --- insert many ---
 
-insert_many usuarios data.json (mostrar error si el formato no es correcto)
+insert_many usuarios data.json
 
 
 --- update_many ---
 
-update_many usuarios data.json
+update_many usuarios data_update.json
 
 
 

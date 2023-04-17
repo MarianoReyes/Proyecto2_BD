@@ -251,22 +251,49 @@ class HBase:
             return f"La tabla '{table_name}' no existe."
 
     def truncate(self, table_name):
+        messages = []
+        messages.append(f"1: Ver si la tabla '{table_name}' existe.")
         if table_name in self.tables:
+            messages.append(f"2: Ver si la tabla '{table_name}' esta habilitada.")
             if self.tables[table_name]["enabled"] == True:
                 column_families = self.tables[table_name]["column_families"]
+                messages.append(f"3: deshabilitando tabla '{table_name}'.")
                 self.disable(table_name)
+                messages.append(f"4: dropeando la tabla '{table_name}'.")
                 self.drop(table_name)
+                messages.append(
+                    f"5: Recreando la tabla '{table_name}' con las mismas column families."
+                )
                 self.create(table_name, column_families)
-                return f"La tabla '{table_name}' ha sido truncada."
+                messages.append(f"6. La tabla '{table_name}' ha sido truncada.")
             else:
-                return f"La tabla '{table_name}' está deshabilitada."
+                messages.append(f"La tabla '{table_name}' está deshabilitada.")
         else:
-            return f"La tabla '{table_name}' no existe."
+            messages.append(f"La tabla '{table_name}' no existe.")
+        return messages
 
     # Puntos extra
+    def check_column_families(self, table_name, data):
+        table_cfs = set(self.tables[table_name]["column_families"].keys())
+        input_cfs = {
+            cf for row in data.values() for cf in row.keys() if cf != "row_key"
+        }
+
+        if not input_cfs.issubset(table_cfs):
+            invalid_cfs = input_cfs.difference(table_cfs)
+            return (
+                False,
+                f"Las siguientes familias de columnas no existen en la tabla '{table_name}': {', '.join(invalid_cfs)}",
+            )
+        return True, ""
+
     def update_many(self, table_name, data):
         if table_name in self.tables:
             if self.tables[table_name]["enabled"] == True:
+                cf_check, cf_error = self.check_column_families(table_name, data)
+                if not cf_check:
+                    return cf_error
+
                 for row_key, row in data.items():
                     for cf, columns in row.items():
                         if cf != "row_key":
@@ -281,6 +308,10 @@ class HBase:
     def insert_many(self, table_name, data):
         if table_name in self.tables:
             if self.tables[table_name]["enabled"] == True:
+                cf_check, cf_error = self.check_column_families(table_name, data)
+                if not cf_check:
+                    return cf_error
+
                 for row_key, row in data.items():
                     for cf, columns in row.items():
                         if cf != "row_key":
@@ -348,8 +379,19 @@ class HBaseGUI:
     def execute_command(self):
         command = self.text_box.get()
         result = self.run_command(command)
+
         self.result_text.configure(state="normal")
-        self.result_text.insert("end", ">>> " + command + "\n" + str(result) + "\n\n")
+
+        if isinstance(result, list):
+            for message in result:
+                self.result_text.insert(
+                    "end", ">>> " + command + "\n" + str(message) + "\n\n"
+                )
+        else:
+            self.result_text.insert(
+                "end", ">>> " + command + "\n" + str(result) + "\n\n"
+            )
+
         self.result_text.see("end")
         self.result_text.configure(state="disabled")
 
